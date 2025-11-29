@@ -12,6 +12,8 @@ import { ThemeProvider, useTheme } from "../context/ThemeContext";
 import { playClickSound } from "../utils/sound";
 import { MOCK_STOCKS } from "../data/mockStocks";
 import { useAuth } from "../../hooks/useAuth";
+import { Sun, Moon } from "lucide-react";
+
 
 import AppLogoLight from "../../assets/portfolio_app_icon_light.png";
 import AppLogoDark from "../../assets/portfolio_app_icon_dark.png";
@@ -217,10 +219,12 @@ const Dashboard = () => {
    * Theme-aware header defined inside the same file.
    * It uses useTheme() which reads from the ThemeProvider below.
    */
-  const Header = ({ onSelectStock }) => {
-    const { isDarkMode, colors } = useTheme();
+const Header = ({ onSelectStock }) => {
+  const { isDarkMode, colors, toggleTheme } = useTheme();
+  const [menuOpen, setMenuOpen] = useState(false);
 
-    return (
+  return (
+    <>
       <div
         style={{
           width: "100%",
@@ -239,10 +243,10 @@ const Dashboard = () => {
             ? "0 2px 10px rgba(0,0,0,0.6)"
             : "0 2px 8px rgba(0,0,0,0.08)",
           borderBottom: isDarkMode ? "1px solid rgba(255,255,255,0.03)" : "1px solid rgba(0,0,0,0.04)",
-          zIndex: 2000,
+          zIndex: 3000,
         }}
       >
-        {/* LEFT: Logo + App Name */}
+        {/* LEFT: Logo */}
         <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
           <img
             src={isDarkMode ? AppLogoDark : AppLogoLight}
@@ -254,37 +258,123 @@ const Dashboard = () => {
               boxShadow: isDarkMode ? "0 2px 8px rgba(0,0,0,0.6)" : "0 2px 8px rgba(0,0,0,0.06)",
             }}
           />
-
           <div>
             <h2
               style={{
                 margin: 0,
                 fontSize: "1.5rem",
                 fontWeight: 700,
-                color: colors?.textPrimary || (isDarkMode ? "#fff" : "#0f172a"),
-                lineHeight: 1,
+                color: colors.textPrimary,
               }}
             >
               StockX
             </h2>
-            <div style={{ fontSize: 12, color: colors?.textSecondary || (isDarkMode ? "#94a3b8" : "#7c7e8c") }}>
+            <div
+              style={{
+                fontSize: 12,
+                color: colors.textSecondary,
+              }}
+            >
               Portfolio · Track · Grow
             </div>
           </div>
         </div>
 
-        {/* RIGHT: Search + Logout */}
+        {/* RIGHT SIDE — Search + Menu Button */}
         <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
-          <div style={{ display: "flex", alignItems: "center" }}>
-            {/* searchbar will receive the onSelectStock handler */}
-            <SearchBar onSelectStock={onSelectStock} />
-          </div>
+          <SearchBar onSelectStock={onSelectStock} />
 
-          <LogoutButton />
+          {/* Hamburger Menu Button */}
+          <div
+            onClick={() => setMenuOpen(!menuOpen)}
+            style={{
+              width: 42,
+              height: 42,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              cursor: "pointer",
+              borderRadius: 10,
+              background: isDarkMode ? "#1e293b" : "#f1f5f9",
+              boxShadow: isDarkMode
+                ? "0 2px 8px rgba(0,0,0,0.5)"
+                : "0 2px 8px rgba(0,0,0,0.08)",
+              transition: "0.2s",
+            }}
+          >
+            <div style={{ fontSize: 26, color: colors.textPrimary }}>☰</div>
+          </div>
         </div>
       </div>
-    );
-  };
+
+      {/* DROPDOWN MENU */}
+      {menuOpen && (
+        <div
+          style={{
+            position: "fixed",
+            top: 72,
+            right: 28,
+            width: 200,
+            background: isDarkMode ? "#0f172a" : "#ffffff",
+            padding: "10px 0",
+            borderRadius: 12,
+            boxShadow: isDarkMode
+              ? "0 4px 16px rgba(0,0,0,0.6)"
+              : "0 4px 16px rgba(0,0,0,0.12)",
+            zIndex: 3500,
+            animation: "fadeIn 0.2s ease-out",
+          }}
+        >
+          {/* Profile */}
+          <div
+            style={menuItemStyle(colors)}
+            onClick={() => alert("Profile clicked")}
+          >
+             Profile
+          </div>
+
+          {/* Theme Toggle */}
+          <div
+            style={menuItemStyle(colors)}
+            onClick={toggleTheme}
+            className="flex items-center gap-3"
+          >
+            {isDarkMode ? (
+              <Sun size={20} color="#fbbf24" />
+            ) : (
+              <Moon size={20} color="#475569" />
+            )}
+
+            <span style={{ marginLeft: 8 }}>
+              {isDarkMode ? "Light Mode" : "Dark Mode"}
+            </span>
+          </div>
+
+
+          {/* Logout */}
+          <div style={menuItemStyle(colors)}>
+            <LogoutButton />
+          </div>
+        </div>
+      )}
+    </>
+  );
+};
+
+// MENU ITEM STYLE
+const menuItemStyle = (colors) => ({
+  padding: "12px 18px",
+  cursor: "pointer",
+  fontSize: 15,
+  color: colors.textPrimary,
+  transition: "0.2s",
+  display: "flex",
+  alignItems: "center",
+  gap: "10px",
+  userSelect: "none",
+  borderBottom: `1px solid ${colors.border}`,
+});
+
 
   /**
    * Theme-aware content wrapper that applies page background & text colors.
@@ -298,7 +388,7 @@ const Dashboard = () => {
         {/* spacer so fixed header doesn't overlap */}
         <div style={{ height: 92 }} />
 
-        {/* Keep your original ThemeToggle (positioned fixed) */}
+        {/* Removed this because now i have added it into the hamburger menu options ThemeToggle (positioned fixed) */}
         <ThemeToggle />
 
         {currentView === "dashboard" && (
