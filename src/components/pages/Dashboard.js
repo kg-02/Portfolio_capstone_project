@@ -13,6 +13,8 @@ import { playClickSound } from "../utils/sound";
 import { MOCK_STOCKS } from "../data/mockStocks";
 import { useAuth } from "../../hooks/useAuth";
 import { Sun, Moon } from "lucide-react";
+import Profile from "../pages/Profile";
+import { useNavigate } from "react-router-dom";
 
 
 import AppLogoLight from "../../assets/portfolio_app_icon_light.png";
@@ -29,6 +31,8 @@ const Dashboard = () => {
   const [editingHolding, setEditingHolding] = useState(null);
 
   const API_BASE_URL = "/api/stocks";
+  const navigate = useNavigate();
+
 
   const getAuthHeaders = () => {
     const token = localStorage.getItem("token");
@@ -326,12 +330,13 @@ const Header = ({ onSelectStock }) => {
           }}
         >
           {/* Profile */}
-          <div
-            style={menuItemStyle(colors)}
-            onClick={() => alert("Profile clicked")}
-          >
-             Profile
-          </div>
+        <div
+          style={menuItemStyle(colors)}
+          onClick={() => navigate("/profile")}
+        >
+          Profile
+        </div>
+
 
           {/* Theme Toggle */}
           <div
@@ -389,7 +394,7 @@ const menuItemStyle = (colors) => ({
         <div style={{ height: 92 }} />
 
         {/* Removed this because now i have added it into the hamburger menu options ThemeToggle (positioned fixed) */}
-        <ThemeToggle />
+        {/* <ThemeToggle /> */}
 
         {currentView === "dashboard" && (
           <DashboardLayout>
