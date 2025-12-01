@@ -30,7 +30,7 @@ const Dashboard = () => {
   const [selectedStock, setSelectedStock] = useState(null);
   const [editingHolding, setEditingHolding] = useState(null);
 
-  const API_BASE_URL = "/api/stocks";
+  const API_BASE_URL = "https://capstone-backend-1xwd.onrender.com/api/stocks";
   const navigate = useNavigate();
 
 
