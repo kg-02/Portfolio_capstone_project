@@ -189,7 +189,7 @@ const Dashboard = () => {
   };
  
   const handleDelete = async (stockId) => {
-    if (!window.confirm("Delete this stock holding?")) return;
+    if (!window.confirm("Sell all of this stock holding?")) return;
  
     playClickSound();
  

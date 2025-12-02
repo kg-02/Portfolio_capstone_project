@@ -589,14 +589,22 @@ const StockPurchaseForm = ({ stock, onSubmit, onBack, isSubmitting = false, init
               </div>
  
               <div style={styles.inputGroup}>
-                <label style={styles.label}>Date</label>
-                <input
-                  type="date"
-                  value={date}
-                  onChange={(e) => setDate(e.target.value)}
-                  style={{ ...styles.input, fontSize: '16px' }}
-                />
-              </div>
+  <label style={{ ...styles.label, color: colors.textPrimary }}>Date</label>
+
+  <input
+    type="date"
+    value={date}
+    disabled
+    style={{
+      ...styles.input,
+      fontSize: "16px",
+      backgroundColor: colors.hover,      // grey background
+      border: `1px solid ${colors.border}`,
+      color: colors.textSecondary,
+      cursor: "not-allowed",
+    }}
+  />
+</div>
  
               <div style={{
                 display: 'flex',

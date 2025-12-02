@@ -5,6 +5,8 @@ import LogoutButton from "./LogoutButton";
 import SearchBar from "./Dashboard/SearchBar";
 import Wallet from "./Wallet";
 import { Sun, Moon, Wallet as WalletIcon } from "lucide-react";
+import { UserCircle } from "lucide-react";
+
  
 import AppLogoLight from "../assets/portfolio_app_icon_light.png";
 import AppLogoDark from "../assets/portfolio_app_icon_dark.png";
@@ -181,8 +183,10 @@ const Header = ({ onSelectStock, showSearch = false }) => {
                             setMenuOpen(false);
                         }}
                     >
-                        Profile
+                        <UserCircle size={20} color="#3b82f6" />
+                        <span style={{ marginLeft: 8 }}>Profile</span>
                     </div>
+
  
                     {/* Wallet */}
                     <div
