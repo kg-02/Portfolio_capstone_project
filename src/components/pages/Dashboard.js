@@ -276,13 +276,18 @@ const Dashboard = () => {
                 </div>
               ) : (
                 <>
-                  <PortfolioSummary stocks={stocks} />
+                  {/* SECTION 1 — Portfolio Summary */}
+                  <div style={{ marginBottom: "32px" }}>
+                    <PortfolioSummary stocks={stocks} />
+                  </div>
+
+                  {/* SECTION 2 — Charts + Stock List */}
                   <div
                     style={{
                       display: "grid",
-                      gridTemplateColumns:
-                        "repeat(auto-fit, minmax(300px, 1fr))",
+                      gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
                       gap: "24px",
+                      marginBottom: "32px", // <-- IMPORTANT
                     }}
                   >
                     <div style={{ gridColumn: "span 2" }}>
@@ -294,7 +299,7 @@ const Dashboard = () => {
                         error={error}
                       />
                     </div>
- 
+
                     <div>
                       <PortfolioCharts stocks={stocks} />
                     </div>
@@ -304,6 +309,7 @@ const Dashboard = () => {
             </div>
           </DashboardLayout>
         )}
+
  
         {currentView === "details" && selectedStock && (
           <ErrorBoundary>
