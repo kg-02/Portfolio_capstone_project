@@ -426,6 +426,7 @@ const menuItemStyle = (colors) => ({
                       gap: "24px",
                     }}
                   >
+                    
                     <div style={{ gridColumn: "span 2" }}>
                       <StockList
                         stocks={stocks}

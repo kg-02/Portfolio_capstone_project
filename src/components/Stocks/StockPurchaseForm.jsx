@@ -449,15 +449,23 @@ const StockPurchaseForm = ({ stock, onSubmit, onBack, isSubmitting = false, init
                 />
               </div>
 
-              <div style={styles.inputGroup}>
-                <label style={styles.label}>Date</label>
-                <input
-                  type="date"
-                  value={date}
-                  onChange={(e) => setDate(e.target.value)}
-                  style={{ ...styles.input, fontSize: '16px' }}
-                />
-              </div>
+              <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                margin: '20px 0',
+                padding: '16px',
+                backgroundColor: colors.background,
+                borderRadius: '8px'
+              }}
+            >
+              <span style={{ color: colors.textSecondary }}>Date</span>
+              <span style={{ fontWeight: '600', color: colors.textPrimary }}>
+                {new Date().toISOString().split("T")[0]}
+              </span>
+            </div>
+
+
 
               <div style={{
                 display: 'flex',
