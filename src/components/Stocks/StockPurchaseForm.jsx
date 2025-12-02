@@ -1,26 +1,120 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, ComposedChart, Bar } from 'recharts';
 import { ArrowLeft, Info } from 'lucide-react';
 import { playClickSound } from '../utils/sound';
-
+ 
 import { useTheme } from '../context/ThemeContext';
-
+ 
 const StockPurchaseForm = ({ stock, onSubmit, onBack, isSubmitting = false, initialValues = null }) => {
   const { colors, isDarkMode } = useTheme();
   const isEditMode = !!initialValues;
   const [timeframe, setTimeframe] = useState('1D');
   const [chartType, setChartType] = useState('line'); // 'line' or 'candle'
-
+ 
   // Initialize state with initialValues if in Edit mode, otherwise defaults
   const [quantity, setQuantity] = useState(initialValues?.quantity || 1);
   const [price, setPrice] = useState(initialValues?.purchasePrice || stock?.currentPrice || 0);
   const [date, setDate] = useState(initialValues?.purchaseDate || new Date().toISOString().split('T')[0]);
-
+ 
+  // --- NewsAPI integration state ---
+  const [news, setNews] = useState([]);
+  const [newsLoading, setNewsLoading] = useState(false);
+  const [newsError, setNewsError] = useState(null);
+  const [newsCollapsed, setNewsCollapsed] = useState(false); // <-- new collapse state
+ 
+  useEffect(() => {
+    // Enhanced News fetch using NewsAPI /everything with fallbacks and debug logs.
+    // Your provided API key is embedded here.
+    const apiKey = 'd5b014937f344e958ce65b0c0c57f69f';
+    if (!apiKey || !stock?.companyName) {
+      setNews([]);
+      return;
+    }
+ 
+    const controller = new AbortController();
+    const signal = controller.signal;
+ 
+    const fetchNews = async () => {
+      setNewsLoading(true);
+      setNewsError(null);
+ 
+      try {
+        // Build a robust OR query: exact company name, symbol, and common short form variations.
+        const parts = [];
+        const safeCompany = (stock.companyName || '').trim();
+        if (safeCompany) parts.push(`"${safeCompany}"`);
+        if (stock.symbol) parts.push(stock.symbol);
+        // try an uppercase acronym (common), and a short name (split first two words)
+        const acronym = (stock.symbol || '').toUpperCase();
+        if (acronym) parts.push(acronym);
+        const short = safeCompany.split(' ').slice(0, 2).join(' ');
+        if (short && short.length < safeCompany.length) parts.push(short);
+ 
+        // remove duplicates
+        const uniqueParts = Array.from(new Set(parts)).filter(Boolean);
+        const q = encodeURIComponent(uniqueParts.join(' OR '));
+ 
+        // Use the broader 'everything' endpoint, language=en, sort by most recent
+        const url = `https://newsapi.org/v2/everything?q=${q}&language=en&sortBy=publishedAt&pageSize=6&apiKey=${apiKey}`;
+ 
+        console.debug('NewsAPI request URL:', url);
+        const res = await fetch(url, { signal });
+ 
+        // Debug network status:
+        console.debug('NewsAPI response status:', res.status, res.statusText);
+ 
+        if (!res.ok) {
+          const text = await res.text();
+          throw new Error(`NewsAPI error: ${res.status} ${text}`);
+        }
+ 
+        const json = await res.json();
+        console.debug('NewsAPI payload:', json);
+ 
+        if (json.status !== 'ok') {
+          throw new Error('NewsAPI returned non-ok status: ' + JSON.stringify(json));
+        }
+ 
+        // If there are zero articles, try a relaxed query (company name only, no quotes)
+        if ((!json.articles || json.articles.length === 0) && safeCompany && !safeCompany.includes('"')) {
+          console.debug('No articles — retrying with relaxed query (company name without quotes)');
+          const q2 = encodeURIComponent(safeCompany);
+          const url2 = `https://newsapi.org/v2/everything?q=${q2}&language=en&sortBy=publishedAt&pageSize=6&apiKey=${apiKey}`;
+          console.debug('Retry URL:', url2);
+          const res2 = await fetch(url2, { signal });
+          if (res2.ok) {
+            const json2 = await res2.json();
+            console.debug('Retry payload:', json2);
+            if (json2.status === 'ok' && json2.articles && json2.articles.length > 0) {
+              setNews(json2.articles);
+              return;
+            }
+          }
+        }
+ 
+        setNews(json.articles || []);
+      } catch (err) {
+        if (err.name !== 'AbortError') {
+          console.warn('Failed to load news:', err);
+          // show explicit error so you can see it in UI
+          setNewsError(err.message || 'Could not load news');
+          setNews([]);
+        }
+      } finally {
+        setNewsLoading(false);
+      }
+    };
+ 
+    fetchNews();
+ 
+    return () => controller.abort();
+  }, [stock?.companyName, stock?.symbol]);
+ 
   const chartData = stock?.chartData?.[timeframe] || [];
   const latestPrice = stock?.currentPrice || 0;
   const isPositive = stock?.changePercent >= 0;
-
+ 
   const handleSubmit = (e) => {
     e.preventDefault();
     playClickSound();
@@ -37,7 +131,7 @@ const StockPurchaseForm = ({ stock, onSubmit, onBack, isSubmitting = false, init
       });
     }
   };
-
+ 
   const styles = {
     container: {
       backgroundColor: colors.background,
@@ -203,9 +297,20 @@ const StockPurchaseForm = ({ stock, onSubmit, onBack, isSubmitting = false, init
       cursor: isSubmitting ? 'not-allowed' : 'pointer',
       opacity: isSubmitting ? 0.7 : 1,
       marginTop: '12px',
+    },
+    newsToggleButton: { // style for the collapsible toggle
+      marginLeft: '12px',
+      padding: '6px 10px',
+      borderRadius: '8px',
+      background: 'transparent',
+      border: `1px solid ${colors.border}`,
+      color: colors.textPrimary,
+      cursor: 'pointer',
+      fontSize: '13px',
+      fontWeight: 500,
     }
   };
-
+ 
   return (
     <div style={styles.container}>
       <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
@@ -213,7 +318,7 @@ const StockPurchaseForm = ({ stock, onSubmit, onBack, isSubmitting = false, init
           <ArrowLeft size={20} />
           Back to Dashboard
         </button>
-
+ 
         <div style={styles.mainGrid}>
           {/* Left Column: Details */}
           <div style={styles.card}>
@@ -234,7 +339,7 @@ const StockPurchaseForm = ({ stock, onSubmit, onBack, isSubmitting = false, init
                 </div>
               </div>
             </div>
-
+ 
             <div style={styles.chartContainer}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
                 <div style={styles.tabs}>
@@ -328,31 +433,31 @@ const StockPurchaseForm = ({ stock, onSubmit, onBack, isSubmitting = false, init
                       shape={(props) => {
                         const { x, y, width, payload } = props;
                         if (!payload) return null;
-
+ 
                         const { open, high, low, close } = payload;
                         const isGreen = close >= open;
                         const color = isGreen ? colors.positive : colors.negative;
-
+ 
                         // Calculate positions
                         const chartHeight = 400;
                         const dataMin = Math.min(...chartData.map((d) => d.value * 0.98));
                         const dataMax = Math.max(...chartData.map((d) => d.value * 1.02));
                         const range = dataMax - dataMin;
-
+ 
                         const getY = (value) => {
                           return chartHeight - ((value - dataMin) / range) * chartHeight;
                         };
-
+ 
                         const highY = getY(high);
                         const lowY = getY(low);
                         const openY = getY(open);
                         const closeY = getY(close);
-
+ 
                         const bodyTop = Math.min(openY, closeY);
                         const bodyHeight = Math.abs(closeY - openY);
                         const candleWidth = Math.max(width * 0.6, 2);
                         const wickX = x + width / 2;
-
+ 
                         return (
                           <g>
                             {/* Upper wick */}
@@ -391,41 +496,75 @@ const StockPurchaseForm = ({ stock, onSubmit, onBack, isSubmitting = false, init
                 )}
               </ResponsiveContainer>
             </div>
-
+ 
             <div>
-              <h3 style={styles.sectionTitle}>Fundamentals</h3>
-              <div style={styles.fundamentalsGrid}>
-                <div style={styles.fundamentalItem}>
-                  <span style={styles.fundLabel}>Market Cap</span>
-                  <span style={styles.fundValue}>{stock.marketCap}</span>
-                </div>
-                <div style={styles.fundamentalItem}>
-                  <span style={styles.fundLabel}>P/E Ratio</span>
-                  <span style={styles.fundValue}>{stock.peRatio}</span>
-                </div>
-                <div style={styles.fundamentalItem}>
-                  <span style={styles.fundLabel}>Dividend Yield</span>
-                  <span style={styles.fundValue}>{stock.dividendYield}</span>
-                </div>
-                <div style={styles.fundamentalItem}>
-                  <span style={styles.fundLabel}>Symbol</span>
-                  <span style={styles.fundValue}>{stock.symbol}</span>
-                </div>
-              </div>
-
               <h3 style={styles.sectionTitle}><Info size={18} /> About {stock.companyName}</h3>
               <p style={{ color: colors.textPrimary, lineHeight: '1.6', fontSize: '14px' }}>
                 {stock.about}
               </p>
+ 
+              {/* News block injected into About with collapsible toggle */}
+              <div style={{ marginTop: '16px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <h4 style={{ margin: '8px 0', color: colors.textPrimary, fontSize: '15px' }}>Latest news</h4>
+ 
+                  {/* Toggle button */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <button
+                      aria-expanded={!newsCollapsed}
+                      onClick={() => { playClickSound(); setNewsCollapsed(prev => !prev); }}
+                      style={styles.newsToggleButton}
+                      title={newsCollapsed ? 'Show news' : 'Hide news'}
+                    >
+                      {newsCollapsed ? 'Show' : 'Hide'}
+                    </button>
+                  </div>
+                </div>
+ 
+                {/* When collapsed show a short one-line summary */}
+                {newsCollapsed ? (
+                  <div style={{ color: colors.textSecondary, fontSize: '13px', marginTop: 8 }}>
+                    {newsLoading ? 'Loading news...' : (newsError ? newsError : `Show article${news.length !== 1 ? 's' : ''}. Click Show to expand.`)}
+                  </div>
+                ) : (
+                  <>
+                    {newsLoading && <p style={{ color: colors.textSecondary, fontSize: '13px' }}>Loading news...</p>}
+                    {newsError && <p style={{ color: colors.textSecondary, fontSize: '13px' }}>{newsError}</p>}
+ 
+                    {!newsLoading && !newsError && news.length === 0 && (
+                      <p style={{ color: colors.textSecondary, fontSize: '13px' }}>No recent news found for this company.</p>
+                    )}
+ 
+                    <ul style={{ paddingLeft: '18px', marginTop: '8px' }}>
+                      {news.map((a, idx) => (
+                        <li key={idx} style={{ marginBottom: '8px', fontSize: '14px', lineHeight: '1.4' }}>
+                          <a
+                            href={a.url}
+                            target="_blank"
+                            rel="noreferrer"
+                            style={{ color: colors.primary, textDecoration: 'none', fontWeight: 500 }}
+                            onClick={() => playClickSound()}
+                          >
+                            {a.title}
+                          </a>
+                          <div style={{ fontSize: '12px', color: colors.textSecondary }}>
+                            {a.source?.name} • {a.publishedAt ? new Date(a.publishedAt).toLocaleString() : ''}
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  </>
+                )}
+              </div>
             </div>
           </div>
-
+ 
           {/* Right Column: Buy/Edit Panel */}
           <div style={{ ...styles.card, ...styles.buyPanel }}>
             <h3 style={{ ...styles.sectionTitle, marginTop: 0 }}>
               {isEditMode ? `Edit ${stock.symbol}` : `Buy ${stock.symbol}`}
             </h3>
-
+ 
             <form onSubmit={handleSubmit}>
               <div style={styles.inputGroup}>
                 <label style={styles.label}>Quantity (Shares)</label>
@@ -437,7 +576,7 @@ const StockPurchaseForm = ({ stock, onSubmit, onBack, isSubmitting = false, init
                   style={styles.input}
                 />
               </div>
-
+ 
               <div style={styles.inputGroup}>
                 <label style={styles.label}>Price (₹)</label>
                 <input
@@ -448,25 +587,17 @@ const StockPurchaseForm = ({ stock, onSubmit, onBack, isSubmitting = false, init
                   style={styles.input}
                 />
               </div>
-
-              <div
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                margin: '20px 0',
-                padding: '16px',
-                backgroundColor: colors.background,
-                borderRadius: '8px'
-              }}
-            >
-              <span style={{ color: colors.textSecondary }}>Date</span>
-              <span style={{ fontWeight: '600', color: colors.textPrimary }}>
-                {new Date().toISOString().split("T")[0]}
-              </span>
-            </div>
-
-
-
+ 
+              <div style={styles.inputGroup}>
+                <label style={styles.label}>Date</label>
+                <input
+                  type="date"
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
+                  style={{ ...styles.input, fontSize: '16px' }}
+                />
+              </div>
+ 
               <div style={{
                 display: 'flex',
                 justifyContent: 'space-between',
@@ -480,7 +611,7 @@ const StockPurchaseForm = ({ stock, onSubmit, onBack, isSubmitting = false, init
                   ₹{(quantity * price).toLocaleString('en-IN')}
                 </span>
               </div>
-
+ 
               <button type="submit" style={styles.submitButton} disabled={isSubmitting}>
                 {isSubmitting ? 'Processing...' : (isEditMode ? 'UPDATE HOLDING' : 'BUY')}
               </button>
@@ -491,7 +622,7 @@ const StockPurchaseForm = ({ stock, onSubmit, onBack, isSubmitting = false, init
     </div>
   );
 };
-
+ 
 StockPurchaseForm.propTypes = {
   stock: PropTypes.object.isRequired,
   onSubmit: PropTypes.func.isRequired,
@@ -504,5 +635,6 @@ StockPurchaseForm.propTypes = {
     purchaseDate: PropTypes.string,
   }),
 };
-
+ 
 export default StockPurchaseForm;
+ 

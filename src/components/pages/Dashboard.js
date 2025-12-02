@@ -1,3 +1,4 @@
+// src/components/pages/Dashboard.js
 import React, { useState, useEffect, useCallback } from "react";
 import ErrorBoundary from "../ErrorBoundary";
 import StockPurchaseForm from "../Stocks/StockPurchaseForm";
@@ -8,14 +9,12 @@ import SearchBar from "../Dashboard/SearchBar";
 import DashboardLayout from "../Dashboard/DashboardLayout";
 import ThemeToggle from "../ThemeToggle";
 import LogoutButton from "../LogoutButton";
-import { ThemeProvider, useTheme } from "../context/ThemeContext";
+import { useTheme } from "../context/ThemeContext"; // <-- use global context (from App.js)
 import { playClickSound } from "../utils/sound";
 import { MOCK_STOCKS } from "../data/mockStocks";
 import { useAuth } from "../../hooks/useAuth";
 import { Sun, Moon } from "lucide-react";
-import Profile from "../pages/Profile";
 import { useNavigate } from "react-router-dom";
-
 
 import AppLogoLight from "../../assets/portfolio_app_icon_light.png";
 import AppLogoDark from "../../assets/portfolio_app_icon_dark.png";
@@ -33,6 +32,8 @@ const Dashboard = () => {
   const API_BASE_URL = "https://capstone-backend-1xwd.onrender.com/api/stocks";
   const navigate = useNavigate();
 
+  // Use theme from the top-level provider (App.js). This ensures Dashboard & Profile share theme.
+  const { isDarkMode, colors, toggleTheme } = useTheme();
 
   const getAuthHeaders = () => {
     const token = localStorage.getItem("token");
@@ -154,20 +155,19 @@ const Dashboard = () => {
 
   const handleEdit = (portfolioItem) => {
     playClickSound();
-    const staticData = MOCK_STOCKS.find(
-      (s) => s.symbol === portfolioItem.symbol
-    );
+    const staticData = MOCK_STOCKS.find((s) => s.symbol === portfolioItem.symbol);
 
-    const fullStockData = staticData || {
-      ...portfolioItem,
-      chartData: {},
-      about: "Description not available",
-      marketCap: "-",
-      peRatio: "-",
-      dividendYield: "-",
-      changePercent: 0,
-      logoUrl: "https://via.placeholder.com/64?text=💼",
-    };
+    const fullStockData =
+      staticData || {
+        ...portfolioItem,
+        chartData: {},
+        about: "Description not available",
+        marketCap: "-",
+        peRatio: "-",
+        dividendYield: "-",
+        changePercent: 0,
+        logoUrl: "https://via.placeholder.com/64?text=💼",
+      };
 
     setSelectedStock(fullStockData);
     setEditingHolding(portfolioItem);
@@ -198,213 +198,199 @@ const Dashboard = () => {
     }
   };
 
+  // If auth is still loading — show simple loading screen with theme-aware background
   if (authLoading) {
     return (
-      <ThemeProvider>
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            minHeight: "100vh",
-          }}
-        >
-          Loading Authentication...
-        </div>
-      </ThemeProvider>
+      <div
+        style={{
+          backgroundColor: colors.background,
+          color: colors.textPrimary,
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          minHeight: "100vh",
+        }}
+      >
+        Loading Authentication...
+      </div>
     );
   }
 
   if (!isAuthenticated) {
-    return <div>Authentication required. Redirecting...</div>;
+    return <div style={{ padding: 24 }}>Authentication required. Redirecting...</div>;
   }
 
   /**
    * Theme-aware header defined inside the same file.
-   * It uses useTheme() which reads from the ThemeProvider below.
+   * It uses useTheme().
    */
-const Header = ({ onSelectStock }) => {
-  const { isDarkMode, colors, toggleTheme } = useTheme();
-  const [menuOpen, setMenuOpen] = useState(false);
+  const Header = ({ onSelectStock }) => {
+    const [menuOpen, setMenuOpen] = useState(false);
 
-  return (
-    <>
-      <div
-        style={{
-          width: "100%",
-          padding: "12px 28px",
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          position: "fixed",
-          top: 0,
-          left: 0,
-          background: isDarkMode
-            ? "rgba(8, 12, 20, 0.85)"
-            : "rgba(255, 255, 255, 0.92)",
-          backdropFilter: "blur(8px)",
-          boxShadow: isDarkMode
-            ? "0 2px 10px rgba(0,0,0,0.6)"
-            : "0 2px 8px rgba(0,0,0,0.08)",
-          borderBottom: isDarkMode ? "1px solid rgba(255,255,255,0.03)" : "1px solid rgba(0,0,0,0.04)",
-          zIndex: 3000,
-        }}
-      >
-        {/* LEFT: Logo */}
-        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-          <img
-            src={isDarkMode ? AppLogoDark : AppLogoLight}
-            alt="StockX Logo"
-            height="52"
-            style={{
-              borderRadius: 10,
-              display: "block",
-              boxShadow: isDarkMode ? "0 2px 8px rgba(0,0,0,0.6)" : "0 2px 8px rgba(0,0,0,0.06)",
-            }}
-          />
-          <div>
-            <h2
+    return (
+      <>
+        <div
+          style={{
+            width: "100%",
+            padding: "12px 28px",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            position: "fixed",
+            top: 0,
+            left: 0,
+            background: isDarkMode
+              ? "rgba(8, 12, 20, 0.85)"
+              : "rgba(255, 255, 255, 0.92)",
+            backdropFilter: "blur(8px)",
+            boxShadow: isDarkMode
+              ? "0 2px 10px rgba(0,0,0,0.6)"
+              : "0 2px 8px rgba(0,0,0,0.08)",
+            borderBottom: isDarkMode ? "1px solid rgba(255,255,255,0.03)" : "1px solid rgba(0,0,0,0.04)",
+            zIndex: 3000,
+          }}
+        >
+          {/* LEFT: Logo */}
+          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+            <img
+              src={isDarkMode ? AppLogoDark : AppLogoLight}
+              alt="StockX Logo"
+              height="52"
               style={{
-                margin: 0,
-                fontSize: "1.5rem",
-                fontWeight: 700,
-                color: colors.textPrimary,
+                borderRadius: 10,
+                display: "block",
+                boxShadow: isDarkMode ? "0 2px 8px rgba(0,0,0,0.6)" : "0 2px 8px rgba(0,0,0,0.06)",
               }}
-            >
-              StockX
-            </h2>
+            />
+            <div>
+              <h2
+                style={{
+                  margin: 0,
+                  fontSize: "1.5rem",
+                  fontWeight: 700,
+                  color: colors.textPrimary,
+                }}
+              >
+                StockX
+              </h2>
+              <div
+                style={{
+                  fontSize: 12,
+                  color: colors.textSecondary,
+                }}
+              >
+                Portfolio · Track · Grow
+              </div>
+            </div>
+          </div>
+
+          {/* RIGHT SIDE — Search + Menu Button */}
+          <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
+            <SearchBar onSelectStock={onSelectStock} />
+
+            {/* Hamburger Menu Button */}
             <div
+              onClick={() => setMenuOpen(!menuOpen)}
               style={{
-                fontSize: 12,
-                color: colors.textSecondary,
+                width: 42,
+                height: 42,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                cursor: "pointer",
+                borderRadius: 10,
+                background: isDarkMode ? "#1e293b" : "#f1f5f9",
+                boxShadow: isDarkMode ? "0 2px 8px rgba(0,0,0,0.5)" : "0 2px 8px rgba(0,0,0,0.08)",
+                transition: "0.2s",
               }}
             >
-              Portfolio · Track · Grow
+              <div style={{ fontSize: 26, color: colors.textPrimary }}>☰</div>
             </div>
           </div>
         </div>
 
-        {/* RIGHT SIDE — Search + Menu Button */}
-        <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
-          <SearchBar onSelectStock={onSelectStock} />
-
-          {/* Hamburger Menu Button */}
+        {/* DROPDOWN MENU */}
+        {menuOpen && (
           <div
-            onClick={() => setMenuOpen(!menuOpen)}
             style={{
-              width: 42,
-              height: 42,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              cursor: "pointer",
-              borderRadius: 10,
-              background: isDarkMode ? "#1e293b" : "#f1f5f9",
-              boxShadow: isDarkMode
-                ? "0 2px 8px rgba(0,0,0,0.5)"
-                : "0 2px 8px rgba(0,0,0,0.08)",
-              transition: "0.2s",
+              position: "fixed",
+              top: 72,
+              right: 28,
+              width: 200,
+              background: isDarkMode ? "#0f172a" : "#ffffff",
+              padding: "10px 0",
+              borderRadius: 12,
+              boxShadow: isDarkMode ? "0 4px 16px rgba(0,0,0,0.6)" : "0 4px 16px rgba(0,0,0,0.12)",
+              zIndex: 3500,
+              animation: "fadeIn 0.2s ease-out",
             }}
           >
-            <div style={{ fontSize: 26, color: colors.textPrimary }}>☰</div>
+            {/* Profile */}
+            <div style={menuItemStyle(colors)} onClick={() => { setMenuOpen(false); navigate("/profile"); }}>
+              Profile
+            </div>
+
+            {/* Theme Toggle */}
+            <div
+              style={menuItemStyle(colors)}
+              onClick={() => {
+                toggleTheme();
+                setMenuOpen(false);
+              }}
+              className="flex items-center gap-3"
+            >
+              {isDarkMode ? <Sun size={20} color="#fbbf24" /> : <Moon size={20} color="#475569" />}
+
+              <span style={{ marginLeft: 8 }}>{isDarkMode ? "Light Mode" : "Dark Mode"}</span>
+            </div>
+
+            {/* Logout */}
+            <div style={menuItemStyle(colors)}>
+              <LogoutButton />
+            </div>
           </div>
-        </div>
-      </div>
+        )}
+      </>
+    );
+  };
 
-      {/* DROPDOWN MENU */}
-      {menuOpen && (
-        <div
-          style={{
-            position: "fixed",
-            top: 72,
-            right: 28,
-            width: 200,
-            background: isDarkMode ? "#0f172a" : "#ffffff",
-            padding: "10px 0",
-            borderRadius: 12,
-            boxShadow: isDarkMode
-              ? "0 4px 16px rgba(0,0,0,0.6)"
-              : "0 4px 16px rgba(0,0,0,0.12)",
-            zIndex: 3500,
-            animation: "fadeIn 0.2s ease-out",
-          }}
-        >
-          {/* Profile */}
-        <div
-          style={menuItemStyle(colors)}
-          onClick={() => navigate("/profile")}
-        >
-          Profile
-        </div>
-
-
-          {/* Theme Toggle */}
-          <div
-            style={menuItemStyle(colors)}
-            onClick={toggleTheme}
-            className="flex items-center gap-3"
-          >
-            {isDarkMode ? (
-              <Sun size={20} color="#fbbf24" />
-            ) : (
-              <Moon size={20} color="#475569" />
-            )}
-
-            <span style={{ marginLeft: 8 }}>
-              {isDarkMode ? "Light Mode" : "Dark Mode"}
-            </span>
-          </div>
-
-
-          {/* Logout */}
-          <div style={menuItemStyle(colors)}>
-            <LogoutButton />
-          </div>
-        </div>
-      )}
-    </>
-  );
-};
-
-// MENU ITEM STYLE
-const menuItemStyle = (colors) => ({
-  padding: "12px 18px",
-  cursor: "pointer",
-  fontSize: 15,
-  color: colors.textPrimary,
-  transition: "0.2s",
-  display: "flex",
-  alignItems: "center",
-  gap: "10px",
-  userSelect: "none",
-  borderBottom: `1px solid ${colors.border}`,
-});
-
+  // MENU ITEM STYLE
+  const menuItemStyle = (colorsObj) => ({
+    padding: "12px 18px",
+    cursor: "pointer",
+    fontSize: 15,
+    color: colorsObj.textPrimary,
+    transition: "0.2s",
+    display: "flex",
+    alignItems: "center",
+    gap: "10px",
+    userSelect: "none",
+    borderBottom: `1px solid ${colorsObj.border}`,
+  });
 
   /**
    * Theme-aware content wrapper that applies page background & text colors.
    * It also contains the original page content (unchanged).
    */
   const ThemeAwareContent = () => {
-    const { isDarkMode, colors } = useTheme();
-
     return (
-      <div style={{ backgroundColor: colors?.background || (isDarkMode ? "#0f172a" : "#F5F7FA"), color: colors?.textPrimary || (isDarkMode ? "#f1f5f9" : "#44475b"), minHeight: "100vh" }}>
+      <div
+        style={{
+          backgroundColor: colors?.background || (isDarkMode ? "#0f172a" : "#F5F7FA"),
+          color: colors?.textPrimary || (isDarkMode ? "#f1f5f9" : "#44475b"),
+          minHeight: "100vh",
+          transition: "background-color 0.2s ease, color 0.2s ease",
+        }}
+      >
         {/* spacer so fixed header doesn't overlap */}
         <div style={{ height: 92 }} />
 
-        {/* Removed this because now i have added it into the hamburger menu options ThemeToggle (positioned fixed) */}
+        {/* ThemeToggle was removed from UI because it lives in hamburger menu; keep component if you want floating button */}
         {/* <ThemeToggle /> */}
 
         {currentView === "dashboard" && (
           <DashboardLayout>
-            <div
-              style={{
-                maxWidth: "1200px",
-                margin: "0 auto",
-                padding: "24px",
-              }}
-            >
+            <div style={{ maxWidth: "1200px", margin: "0 auto", padding: "24px" }}>
               {loading ? (
                 <div style={{ textAlign: "center", padding: "60px 20px" }}>
                   <p>Loading your portfolio...</p>
@@ -417,16 +403,20 @@ const menuItemStyle = (colors) => ({
                 </div>
               ) : (
                 <>
-                  <PortfolioSummary stocks={stocks} />
+                  {/* SECTION 1 — Portfolio Summary */}
+                  <div style={{ marginBottom: "32px" }}>
+                    <PortfolioSummary stocks={stocks} />
+                  </div>
+
+                  {/* SECTION 2 — Charts + Stock List */}
                   <div
                     style={{
                       display: "grid",
-                      gridTemplateColumns:
-                        "repeat(auto-fit, minmax(300px, 1fr))",
+                      gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
                       gap: "24px",
+                      marginBottom: "32px",
                     }}
                   >
-                    
                     <div style={{ gridColumn: "span 2" }}>
                       <StockList
                         stocks={stocks}
@@ -462,14 +452,15 @@ const menuItemStyle = (colors) => ({
     );
   };
 
-  // Render ThemeProvider once (as you had), then render theme-aware header + content inside it
+  // RENDER — use only the global ThemeProvider (do NOT wrap again here)
   return (
-    <ThemeProvider>
-      <>
-        <Header onSelectStock={handleStockSelect} />
-        <ThemeAwareContent />
-      </>
-    </ThemeProvider>
+    <>
+      <Header onSelectStock={handleStockSelect} />
+      <ThemeAwareContent />
+      {/* If you'd like a floating toggle button instead of menu one, uncomment:
+          <ThemeToggle />
+      */}
+    </>
   );
 };
 

@@ -9,14 +9,7 @@ import SearchBar from "../Dashboard/SearchBar";
 import AppLogoLight from "../../assets/portfolio_app_icon_light.png";
 import AppLogoDark from "../../assets/portfolio_app_icon_dark.png";
 
-/**
- * Full-featured Profile page.
- * - Uses your ThemeContext colors
- * - Calls /api/me with getAuthHeaders
- * - Shows Personal Info, Investment Goal & Risk Profile, Recent Activity
- * - Matches dashboard card styles (solid card - option B)
- * - Back to dashboard button with playClickSound()
- */
+
 
 const API_BASE = "https://capstone-backend-1xwd.onrender.com";
 
@@ -47,36 +40,6 @@ const Profile = () => {
     };
   }, []);
 
-  // Last-seen formatter (no NaN)
-  const formatLastSeen = (isoTime) => {
-    if (!isoTime) return "Unknown";
-    const last = new Date(isoTime);
-    if (isNaN(last.getTime())) return "Unknown";
-    const now = new Date();
-    const diffMs = now - last;
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMins / 60);
-    const diffDays = Math.floor(diffHours / 24);
-
-    if (diffMins < 1) return "Just now";
-    if (diffMins < 60) return `${diffMins} min${diffMins > 1 ? "s" : ""} ago`;
-    if (diffHours < 24) return `${diffHours} hr${diffHours > 1 ? "s" : ""} ago`;
-    return `${diffDays} day${diffDays > 1 ? "s" : ""} ago`;
-  };
-
-  // Active logic — lastActiveAt within 10 minutes = Active now
-  const computeActiveStatus = (isoTime) => {
-    if (!isoTime) return { label: "Inactive", isActive: false };
-    const last = new Date(isoTime);
-    if (isNaN(last.getTime())) return { label: "Inactive", isActive: false };
-    const diffMs = Date.now() - last.getTime();
-    const isActive = diffMs < 10 * 60 * 1000; // 10 minutes
-    return {
-      label: isActive ? "Active now" : `Last seen ${formatLastSeen(isoTime)}`,
-      isActive,
-    };
-  };
-
   // Fetch profile from /api/me (authorized)
   const fetchProfile = useCallback(async () => {
     setLoading(true);
@@ -100,17 +63,6 @@ const Profile = () => {
 
       const data = await res.json();
 
-      /**
-       * /api/me returned this JSON in your example:
-       * {
-       *  fullName, username, email, phone, experience, riskAppetite,
-       *  investmentGoal, investorSince, isActive, walletBalance,
-       *  recentActivity: [{ symbol, companyName, action, timeAgo }, ...],
-       *  lastActiveAt
-       * }
-       *
-       * Some backends wrap under { user: { ... } }, so handle both.
-       */
       const profileData = data.user ? data.user : data;
 
       setProfile(profileData);
@@ -359,9 +311,9 @@ const Profile = () => {
                   <div style={{ marginTop: 6, color: colors.textSecondary }}>
                     {profile.username} · {profile.email}
                   </div>
-                  <div style={{ marginTop: 8, color: colors.textSecondary, display: "flex", gap: 12, alignItems: "center" }}>
+                  {/* <div style={{ marginTop: 8, color: colors.textSecondary, display: "flex", gap: 12, alignItems: "center" }}>
                     <Clock size={14} /> {formatLastSeenText(profile.lastActiveAt)}
-                  </div>
+                  </div> */}
                 </div>
 
                 {/* Status & Wallet */}
@@ -373,18 +325,7 @@ const Profile = () => {
                     ₹ {Number(profile.walletBalance || 0).toLocaleString()}
                   </div>
                   <div style={{ marginTop: 10 }}>
-                    <span
-                      style={{
-                        padding: "6px 12px",
-                        borderRadius: 12,
-                        background: profile.isActive ? "#d1f5d3" : "#ffebeb",
-                        color: profile.isActive ? "#0a8a12" : "#a80000",
-                        fontWeight: 700,
-                        fontSize: 13,
-                      }}
-                    >
-                      {computeActiveStatus(profile.lastActiveAt).label}
-                    </span>
+                    
                   </div>
                 </div>
               </div>
@@ -406,7 +347,7 @@ const Profile = () => {
 
                     <div>
                       <div style={styles.fieldLabel}>Username</div>
-                      <div style={styles.fieldBox}>@{profile.username || "N/A"}</div>
+                      <div style={styles.fieldBox}>{profile.username || "N/A"}</div>
                     </div>
 
                     <div>
@@ -427,13 +368,6 @@ const Profile = () => {
                       <div style={styles.fieldLabel}>Member Since</div>
                       <div style={styles.fieldBox}>
                         {profile.investorSince || profile.createdAt ? (profile.investorSince || new Date(profile.createdAt).toLocaleDateString()) : "N/A"}
-                      </div>
-                    </div>
-
-                    <div>
-                      <div style={styles.fieldLabel}>Status</div>
-                      <div style={styles.fieldBox}>
-                        {computeActiveStatus(profile.lastActiveAt).label}
                       </div>
                     </div>
                   </div>
@@ -520,20 +454,6 @@ const Profile = () => {
     </>
   );
 
-  // helper inside component to format last seen text succinctly for header summary
-  function formatLastSeenText(iso) {
-    if (!iso) return "Unknown";
-    const last = new Date(iso);
-    if (isNaN(last.getTime())) return "Unknown";
-    const diffMs = Date.now() - last.getTime();
-    const diffMin = Math.floor(diffMs / 60000);
-    if (diffMin < 1) return "Just now";
-    if (diffMin < 60) return `${diffMin} min${diffMin > 1 ? "s" : ""} ago`;
-    const diffHr = Math.floor(diffMin / 60);
-    if (diffHr < 24) return `${diffHr} hr${diffHr > 1 ? "s" : ""} ago`;
-    const diffDays = Math.floor(diffHr / 24);
-    return `${diffDays} day${diffDays > 1 ? "s" : ""} ago`;
-  }
 };
 
 export default Profile;
