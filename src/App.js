@@ -4,7 +4,8 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { ThemeProvider as MuiThemeProvider } from "@mui/material/styles";   // rename
 import CssBaseline from "@mui/material/CssBaseline";
 
-import { ThemeProvider as AppThemeProvider } from "./components/context/ThemeContext";  // ⭐ Custom provider
+import { ThemeProvider as AppThemeProvider } from "./components/context/ThemeContext";
+import { WalletProvider } from "./components/context/WalletContext";  // ⭐ Custom provider
 
 import Login from "./components/Auth/Login";
 import RegistrationForm from "./components/Registration/RegistrationForm";
@@ -17,22 +18,24 @@ import appTheme from "./theme";
 
 function App() {
   return (
-    <AppThemeProvider>           
-      <MuiThemeProvider theme={appTheme}>   
-        <CssBaseline />
+    <AppThemeProvider>
+      <WalletProvider>
+        <MuiThemeProvider theme={appTheme}>
+          <CssBaseline />
 
-        <Router>
-          <Routes>
-            <Route path="/" element={<Login />} />
-            <Route path="/register" element={<RegistrationForm />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/forgot" element={<ForgotPassword />} /> 
-            <Route path="/explore" element={<Explore />} />
-            <Route path="/profile" element={<Profile />} />
-          </Routes>
-        </Router>
+          <Router>
+            <Routes>
+              <Route path="/" element={<Login />} />
+              <Route path="/register" element={<RegistrationForm />} />
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/forgot" element={<ForgotPassword />} />
+              <Route path="/explore" element={<Explore />} />
+              <Route path="/profile" element={<Profile />} />
+            </Routes>
+          </Router>
 
-      </MuiThemeProvider>
+        </MuiThemeProvider>
+      </WalletProvider>
     </AppThemeProvider>
   );
 }

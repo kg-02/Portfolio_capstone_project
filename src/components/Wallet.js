@@ -1,25 +1,14 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
+import { useWallet } from "./context/WalletContext";
 import { useTheme } from "./context/ThemeContext";
-import { X, Wallet as WalletIcon, TrendingUp, ArrowUpCircle } from "lucide-react";
+import { X, Wallet as WalletIcon, ArrowUpCircle } from "lucide-react";
 import { Box, Typography, Button, Modal, Card, CardContent, TextField, InputAdornment } from "@mui/material";
- 
+
 const Wallet = ({ open, onClose }) => {
     const { isDarkMode, colors } = useTheme();
-    const [balance, setBalance] = useState(0);
-    const [loading, setLoading] = useState(true);
+    const { balance, updateBalance, loading } = useWallet();
     const [amount, setAmount] = useState("");
- 
-    useEffect(() => {
-        if (open) {
-            // TODO: Fetch balance from backend
-            // For now, using mock data
-            setTimeout(() => {
-                setBalance(10000);
-                setLoading(false);
-            }, 500);
-        }
-    }, [open]);
- 
+
     const loadRazorpayScript = () => {
         return new Promise((resolve) => {
             const script = document.createElement("script");
@@ -33,39 +22,30 @@ const Wallet = ({ open, onClose }) => {
             document.body.appendChild(script);
         });
     };
- 
+
     const handleTopUp = async () => {
         const res = await loadRazorpayScript();
- 
+
         if (!res) {
             alert("Razorpay SDK failed to load. Are you online?");
             return;
         }
- 
+
         const topUpAmount = parseFloat(amount);
         if (!topUpAmount || topUpAmount <= 0) {
             alert("Please enter a valid amount");
             return;
         }
- 
-        // In a real app, you should create an order on your backend here
-        // const data = await fetch('/create-order', { method: 'POST', ... }).then((t) => t.json());
- 
+
         const options = {
-            key: "rzp_test_RmeET7lIph7vJw", // Enter the Key ID generated from the Dashboard
-            amount: topUpAmount * 100, // Amount is in currency subunits. Default currency is INR. Hence, 50000 refers to 50000 paise
+            key: "rzp_test_RmeET7lIph7vJw",
+            amount: topUpAmount * 100,
             currency: "INR",
-            name: "Portfolio App",
+            name: "StockX Portfolio",
             description: "Wallet Top Up",
-            image: "https://via.placeholder.com/150", // You can replace this with your app logo
-            // order_id: "order_9A33XWu170g81s", // This is a sample Order ID. Pass the `id` obtained in the response of Step 1
+            image: "https://via.placeholder.com/150",
             handler: function (response) {
-                // alert(response.razorpay_payment_id);
-                // alert(response.razorpay_order_id);
-                // alert(response.razorpay_signature);
- 
-                // Simulate successful payment
-                setBalance((prev) => prev + topUpAmount);
+                updateBalance(topUpAmount, "add");
                 setAmount("");
                 alert(`Payment Successful! Payment ID: ${response.razorpay_payment_id}`);
             },
@@ -74,18 +54,15 @@ const Wallet = ({ open, onClose }) => {
                 email: "user@example.com",
                 contact: "9999999999",
             },
-            notes: {
-                address: "Razorpay Corporate Office",
-            },
             theme: {
                 color: colors.primary,
             },
         };
- 
+
         const paymentObject = new window.Razorpay(options);
         paymentObject.open();
     };
- 
+
     return (
         <Modal
             open={open}
@@ -126,7 +103,7 @@ const Wallet = ({ open, onClose }) => {
                 >
                     <X size={24} />
                 </Box>
- 
+
                 <CardContent sx={{ p: 4 }}>
                     {/* Header */}
                     <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 4 }}>
@@ -164,7 +141,7 @@ const Wallet = ({ open, onClose }) => {
                             </Typography>
                         </Box>
                     </Box>
- 
+
                     {/* Balance Display */}
                     <Box
                         sx={{
@@ -216,7 +193,7 @@ const Wallet = ({ open, onClose }) => {
                             </Typography>
                         )}
                     </Box>
- 
+
                     {/* Amount Input */}
                     <TextField
                         fullWidth
@@ -250,7 +227,7 @@ const Wallet = ({ open, onClose }) => {
                             ),
                         }}
                     />
- 
+
                     {/* Top Up Button */}
                     <Button
                         fullWidth
@@ -285,7 +262,7 @@ const Wallet = ({ open, onClose }) => {
                     >
                         Top Up Wallet
                     </Button>
- 
+
                     {/* Info Text */}
                     <Typography
                         variant="caption"
@@ -303,5 +280,5 @@ const Wallet = ({ open, onClose }) => {
         </Modal>
     );
 };
- 
+
 export default Wallet;

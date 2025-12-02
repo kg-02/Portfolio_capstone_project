@@ -2,14 +2,15 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import { useTheme } from "../context/ThemeContext";
 import Header from "../Header";
-import { MOCK_STOCKS } from "../data/mockStocks";
+import { useLiveStocks } from "../../hooks/useLiveStocks";
 import { Box, Typography, Grid, Card, CardContent, CardMedia, Chip } from "@mui/material";
 import { TrendingUp, TrendingDown } from "lucide-react";
- 
+
 const Explore = () => {
     const { isDarkMode, colors } = useTheme();
     const navigate = useNavigate();
- 
+    const stocks = useLiveStocks(); // Live fluctuating stocks
+
     return (
         <Box
             sx={{
@@ -19,10 +20,10 @@ const Explore = () => {
             }}
         >
             <Header />
- 
+
             {/* Spacer for fixed header */}
             <div style={{ height: 92 }} />
- 
+
             <Box sx={{ p: 4, maxWidth: "1200px", margin: "0 auto" }}>
                 <Typography
                     variant="h4"
@@ -35,7 +36,7 @@ const Explore = () => {
                 >
                     Explore Stocks
                 </Typography>
- 
+
                 <Box
                     sx={{
                         display: "grid",
@@ -43,7 +44,7 @@ const Explore = () => {
                         gap: 3,
                     }}
                 >
-                    {MOCK_STOCKS.map((stock) => (
+                    {stocks.map((stock) => (
                         <Card
                             key={stock.id}
                             onClick={() => navigate("/dashboard", { state: { selectedStock: stock } })}
@@ -89,7 +90,7 @@ const Explore = () => {
                                         </Typography>
                                     </Box>
                                 </Box>
- 
+
                                 <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
                                     <Typography variant="h5" sx={{ fontWeight: "bold" }}>
                                         ₹{stock.currentPrice.toLocaleString()}
@@ -108,7 +109,7 @@ const Explore = () => {
                                         }}
                                     />
                                 </Box>
- 
+
                                 <Box sx={{ display: "flex", justifyContent: "space-between", fontSize: "0.875rem", color: colors.textSecondary }}>
                                     <Box>
                                         <Typography variant="caption" display="block">Market Cap</Typography>
@@ -123,7 +124,7 @@ const Explore = () => {
                                         <Typography variant="body2" fontWeight="500">{stock.dividendYield}</Typography>
                                     </Box>
                                 </Box>
- 
+
                                 <Typography
                                     variant="body2"
                                     sx={{
@@ -137,7 +138,7 @@ const Explore = () => {
                                 >
                                     {stock.about}
                                 </Typography>
- 
+
                             </CardContent>
                         </Card>
                     ))}
@@ -146,7 +147,6 @@ const Explore = () => {
         </Box>
     );
 };
- 
+
 export default Explore;
- 
- 
+

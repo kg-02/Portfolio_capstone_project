@@ -1,17 +1,19 @@
 // src/components/pages/Profile.jsx
 import React, { useEffect, useState, useCallback } from "react";
 import { useTheme } from "../context/ThemeContext";
+import { useWallet } from "../context/WalletContext";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, User, Target, Activity, Mail, Phone } from "lucide-react";
 import { playClickSound } from "../utils/sound";
 import LogoutButton from "../LogoutButton";
-import Header from "../Header"; 
+import Header from "../Header";
 
 
 const API_BASE = "https://capstone-backend-service-mkiq.onrender.com";
 
 const Profile = () => {
   const { isDarkMode, colors, toggleTheme } = useTheme();
+  const { balance } = useWallet();
   const navigate = useNavigate();
 
   const [profile, setProfile] = useState(null);
@@ -49,7 +51,7 @@ const Profile = () => {
         let text;
         try {
           text = await res.text();
-        } catch {}
+        } catch { }
         throw new Error(`Profile fetch failed (${res.status}) ${text || ""}`);
       }
 
@@ -84,7 +86,7 @@ const Profile = () => {
       minHeight: "100vh",
       backgroundColor: colors.background,
       color: colors.textPrimary,
-      paddingTop: 92, 
+      paddingTop: 92,
     },
     container: {
       maxWidth: 1200,
@@ -196,8 +198,15 @@ const Profile = () => {
                 </div>
 
                 <div style={{ textAlign: "right" }}>
-                  <div style={{ marginBottom: 8, fontWeight: 700 }}>Wallet</div>
-                  <div style={{ fontSize: 18, fontWeight: 800 }}>₹ {Number(profile.walletBalance || 0).toLocaleString()}</div>
+                  <div style={{ marginBottom: 8, fontWeight: 700 }}>
+                    Wallet
+                  </div>
+                  <div style={{ fontSize: 18, fontWeight: 800 }}>
+                    ₹ {Number(balance || 0).toLocaleString()}
+                  </div>
+                  <div style={{ marginTop: 10 }}>
+
+                  </div>
                 </div>
               </div>
 
