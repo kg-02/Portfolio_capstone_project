@@ -11,7 +11,7 @@ import AppLogoDark from "../../assets/portfolio_app_icon_dark.png";
 
 
 
-const API_BASE = "https://capstone-backend-1xwd.onrender.com";
+const API_BASE = "https://capstone-backend-service-mkiq.onrender.com";
 
 const Profile = () => {
   const { isDarkMode, colors, toggleTheme } = useTheme();
